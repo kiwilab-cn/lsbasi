@@ -35,6 +35,38 @@ impl<'a, T> Interpreter<'a, T> {
             current_token: None,
         }
     }
+
+    fn get_next_token(&self) -> & Token<T> {
+        let text = &self.text;
+        if self.pos > text.len() {
+            return Token{genre: TokenType::EOF, value: None};
+        }
+
+        let current_char = text.chars().nth(self.pos);
+        if current_char.is_numeric {
+            let token = Token{genre: TokenType::INTEGER, value: current_char};
+            self.pos += 1;
+            return token;
+        }
+
+        if current_char == '+' {
+            let token = Token{genre: TokenType::PLUS, value: current_char};
+            self.pos += 1;
+            return token;
+        }
+
+    }
+
+    fn eat(&self, token_type: CalcTokenType) {
+        if &self.current_token.unwrap().genre == token_type {
+            &self.curren_token = self.get_next_token();
+        } else {
+
+        }
+
+    }
+
+
 }
 
 
@@ -49,5 +81,6 @@ fn main() {
         pos: 0,
         current_token: None,
     };
+
     println!("{}, {}", z.text, y.text);
 }
