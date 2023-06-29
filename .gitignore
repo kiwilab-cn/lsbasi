@@ -1,3 +1,4 @@
 part-*/target
 part-*/debug
 part-*/Cargo.lock
+part-*/*.pdb
