@@ -36,37 +36,49 @@ impl<'a, T> Interpreter<'a, T> {
         }
     }
 
-    fn get_next_token(&self) -> & Token<T> {
+    fn get_next_token(&self) -> &Token<T> {
         let text = &self.text;
         if self.pos > text.len() {
-            return Token{genre: TokenType::EOF, value: None};
+            return &Token{genre: TokenType::EOF, value: None};
         }
 
         let current_char = text.chars().nth(self.pos);
         if current_char.is_numeric {
             let token = Token{genre: TokenType::INTEGER, value: current_char};
             self.pos += 1;
-            return token;
-        }
-
-        if current_char == '+' {
+            return &token;
+        } else if current_char == '+' {
             let token = Token{genre: TokenType::PLUS, value: current_char};
             self.pos += 1;
-            return token;
+            return &token;
         }
-
+        panic!(true)
     }
 
-    fn eat(&self, token_type: CalcTokenType) {
+    fn eat(&self, token_type: CalcTokenType)-> Result<(), bool> {
         if &self.current_token.unwrap().genre == token_type {
             &self.curren_token = self.get_next_token();
+            return Ok(());
         } else {
-
+            return Err(false);
         }
-
     }
 
 
+    fn expr(&self) -> T {
+        &self.current_token = &self.get_next_token();
+        let left = &self.current_token;
+        &self.eat(CalcTokenType::INTEGER);
+
+        let op = &self.current_token;
+        &self.eat(CalcTokenType::PLUS);
+
+        let right = &self.current_token;
+        &self.eat(CalcTokenType::INTEGER);
+
+        let result = left.unwrap().value + right.unwrap().value;
+        return result;
+    }
 }
 
 
