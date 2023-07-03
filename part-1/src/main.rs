@@ -1,3 +1,4 @@
+use std::io;
 use strum_macros::Display;
 
 #[derive(Display)]
@@ -18,7 +19,6 @@ impl<T> Token<T> where T: std::fmt::Display {
     fn display(&self) -> String {
         format!("Token({}, {})", &self.genre, &self.value)
     }
-
 }
 
 struct Interpreter<'a, T> {
@@ -28,23 +28,27 @@ struct Interpreter<'a, T> {
 }
 
 impl<'a, T> Interpreter<'a, T> {
-    fn new(text: String)-> Self {
-       Self {
+    fn new(text: String)-> Interpreter<'a, T>{
+       Interpreter {
             text: text,
             pos: 0,
             current_token: None,
         }
     }
+}
 
+impl<'a, T> Interpreter<'a, T>
+where
+    T: PartialOrd + Clone + Copy {
     fn get_next_token(&self) -> &Token<T> {
         let text = &self.text;
-        if self.pos > text.len() {
-            return &Token{genre: TokenType::EOF, value: None};
+        if self.pos as usize > text.len() {
+            return &Token{genre: TokenType::EOF, value: '\0'};
         }
 
-        let current_char = text.chars().nth(self.pos);
-        if current_char.is_numeric {
-            let token = Token{genre: TokenType::INTEGER, value: current_char};
+        let current_char = text.chars().nth(self.pos as usize).unwrap();
+        if current_char.is_numeric() {
+            let token = Token{genre: TokenType::INTEGER, value: current_char.to_digit(10).unwrap()};
             self.pos += 1;
             return &token;
         } else if current_char == '+' {
@@ -52,20 +56,25 @@ impl<'a, T> Interpreter<'a, T> {
             self.pos += 1;
             return &token;
         }
-        panic!(true)
-    }
 
+        return &Token { genre: (TokenType::EOF), value: '\0' };
+    }
+}
+
+
+impl<'a, T> Interpreter<'a, T> {
     fn eat(&self, token_type: CalcTokenType)-> Result<(), bool> {
         if &self.current_token.unwrap().genre == token_type {
-            &self.curren_token = self.get_next_token();
+            &self.current_token = self.get_next_token();
             return Ok(());
         } else {
             return Err(false);
         }
     }
+}
 
-
-    fn expr(&self) -> T {
+impl<'a, T> Interpreter<'a, T> {
+    fn expr(&self) -> i32 {
         &self.current_token = &self.get_next_token();
         let left = &self.current_token;
         &self.eat(CalcTokenType::INTEGER);
@@ -81,8 +90,8 @@ impl<'a, T> Interpreter<'a, T> {
     }
 }
 
-
-fn main() {
+fn main() -> io::Result<()>{
+    /*
     let x = Token {genre: TokenType::INTEGER, value: 3};
     println!("{}, {}", x.genre.to_string(), x.value);
     println!("{}", x.display());
@@ -95,4 +104,12 @@ fn main() {
     };
 
     println!("{}, {}", z.text, y.text);
+    */
+    loop {
+        let mut input = String::new();
+        print!("calc >");
+        io::stdin().read_line(&mut input)?;
+        println!("input: {}", input.trim())
+    }
+
 }
