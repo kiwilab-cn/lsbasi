@@ -1,7 +1,6 @@
-use std::io;
-use strum_macros::Display;
+use std::{io::{self, Write}, fmt::Display};
 
-#[derive(Display)]
+#[derive(PartialEq)]
 enum TokenType {
     INTEGER,
     PLUS,
@@ -10,106 +9,126 @@ enum TokenType {
 
 type CalcTokenType = TokenType;
 
-struct Token<T> {
-    genre: CalcTokenType,
-    value: T,
-}
-
-impl<T> Token<T> where T: std::fmt::Display {
-    fn display(&self) -> String {
-        format!("Token({}, {})", &self.genre, &self.value)
+impl Display for CalcTokenType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            CalcTokenType::EOF => write!(f, "EOF"),
+            CalcTokenType::INTEGER => write!(f, "INTEGER"),
+            CalcTokenType::PLUS => write!(f, "PLUS"),
+        }
     }
 }
 
-struct Interpreter<'a, T> {
-    text: String,
-    pos: i32,
-    current_token: Option<&'a Token<T>>,
+struct Token {
+    genre: CalcTokenType,
+    value: Option<char>,
 }
 
-impl<'a, T> Interpreter<'a, T> {
-    fn new(text: String)-> Interpreter<'a, T>{
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.value{
+            Some(t) => write!(f, "Token({}, {})", &self.genre, t),
+            None => write!(f, "Token({}, None)", &self.genre),
+        }
+    }
+}
+
+struct Interpreter {
+    text: String,
+    pos: i32,
+    current_token: Option<Token>,
+}
+
+impl Display for Interpreter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.current_token {
+            Some(t) => {
+                return write!(f, "text:{}, post:{}, current_token:{}", &self.text, &self.pos, t);
+            }
+            None => {
+                return write!(f, "text:{}, post:{}, current_token: None", &self.text, &self.pos);
+            }
+        }
+    }
+}
+
+impl Interpreter {
+    fn new(text: String)-> Interpreter {
        Interpreter {
             text: text,
             pos: 0,
             current_token: None,
         }
     }
-}
 
-impl<'a, T> Interpreter<'a, T>
-where
-    T: PartialOrd + Clone + Copy {
-    fn get_next_token(&self) -> &Token<T> {
+    fn get_next_token(&mut self) -> Token {
         let text = &self.text;
-        if self.pos as usize > text.len() {
-            return &Token{genre: TokenType::EOF, value: '\0'};
+        let pos = self.pos as usize;
+
+        if pos > text.len() -1 {
+            return Token {genre: CalcTokenType::EOF, value: None};
         }
 
-        let current_char = text.chars().nth(self.pos as usize).unwrap();
-        if current_char.is_numeric() {
-            let token = Token{genre: TokenType::INTEGER, value: current_char.to_digit(10).unwrap()};
+        let current_char = text.chars().nth(pos).unwrap();
+
+        if current_char.is_digit(10) {
+            let token = Token { genre: CalcTokenType::INTEGER, value: Some(current_char)};
             self.pos += 1;
-            return &token;
-        } else if current_char == '+' {
-            let token = Token{genre: TokenType::PLUS, value: current_char};
-            self.pos += 1;
-            return &token;
+            return token;
         }
 
-        return &Token { genre: (TokenType::EOF), value: '\0' };
+        if current_char == '+' {
+            let token = Token { genre: CalcTokenType::PLUS, value: Some(current_char)};
+            self.pos += 1;
+            return token;
+        }
+
+        return Token{genre: CalcTokenType::EOF, value: None};
     }
-}
 
-
-impl<'a, T> Interpreter<'a, T> {
-    fn eat(&self, token_type: CalcTokenType)-> Result<(), bool> {
-        if &self.current_token.unwrap().genre == token_type {
-            &self.current_token = self.get_next_token();
-            return Ok(());
+    fn eat(&mut self, token_type: CalcTokenType) -> Result<(), bool> {
+        let current_token_type = self.current_token.take().unwrap().genre;
+        if current_token_type == token_type {
+            self.current_token = Some(self.get_next_token());
+            Ok(())
         } else {
-            return Err(false);
+            Err(true)
         }
     }
-}
 
-impl<'a, T> Interpreter<'a, T> {
-    fn expr(&self) -> i32 {
-        &self.current_token = &self.get_next_token();
-        let left = &self.current_token;
-        &self.eat(CalcTokenType::INTEGER);
+    fn expr(&mut self) -> u32 {
+        self.current_token = Some(self.get_next_token());
 
-        let op = &self.current_token;
-        &self.eat(CalcTokenType::PLUS);
+        let left = &self.current_token.as_ref().unwrap().value.unwrap().to_digit(10).unwrap();
+        let _ = self.eat(CalcTokenType::INTEGER);
 
-        let right = &self.current_token;
-        &self.eat(CalcTokenType::INTEGER);
+        let _op = &self.current_token.as_ref().unwrap();
+        let _ = self.eat(CalcTokenType::PLUS);
 
-        let result = left.unwrap().value + right.unwrap().value;
-        return result;
+        let right = &self.current_token.as_ref().unwrap().value.unwrap().to_digit(10).unwrap();
+        let _ = self.eat(CalcTokenType::INTEGER);
+
+        let result = left + right;
+        result
     }
 }
+
 
 fn main() -> io::Result<()>{
-    /*
-    let x = Token {genre: TokenType::INTEGER, value: 3};
-    println!("{}, {}", x.genre.to_string(), x.value);
-    println!("{}", x.display());
-
-    let y: Interpreter<'_, u32> = Interpreter::new(String::from("Test ABC"));
-    let z: Interpreter<'_, u32> = Interpreter{
-        text: String::from("Test ABC."),
-        pos: 0,
-        current_token: None,
-    };
-
-    println!("{}, {}", z.text, y.text);
-    */
     loop {
-        let mut input = String::new();
         print!("calc >");
+        io::stdout().flush().unwrap();
+
+        let mut input = String::new();
         io::stdin().read_line(&mut input)?;
-        println!("input: {}", input.trim())
+
+        let user_input = input.trim().to_string();
+        let mut interpreter = Interpreter::new(user_input);
+        let result = interpreter.expr();
+
+        println!("{}", result);
+        io::stdout().flush().unwrap();
     }
 
 }
