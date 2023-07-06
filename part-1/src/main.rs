@@ -43,12 +43,8 @@ struct Interpreter {
 impl Display for Interpreter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.current_token {
-            Some(t) => {
-                return write!(f, "text:{}, post:{}, current_token:{}", &self.text, &self.pos, t);
-            }
-            None => {
-                return write!(f, "text:{}, post:{}, current_token: None", &self.text, &self.pos);
-            }
+            Some(t) => write!(f, "text:{}, post:{}, current_token:{}", &self.text, &self.pos, t),
+            None => write!(f, "text:{}, post:{}, current_token: None", &self.text, &self.pos),
         }
     }
 }
