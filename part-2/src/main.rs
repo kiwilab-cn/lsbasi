@@ -90,21 +90,17 @@ impl<'a> Interpreter<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        while let Some(i) = self.current_char {
-            if i.is_whitespace() {
-                self.advance()
-            }
+        while self.current_char != None && self.current_char.unwrap().is_whitespace() {
+            self.advance();
         }
     }
 
     fn integer(&mut self) -> i32 {
         let mut result = String::from("");
 
-        while let Some(i) = self.current_char {
-            if i.is_digit(10) {
-                result.push(i);
-                self.advance();
-            }
+        while self.current_char != None && self.current_char.unwrap().is_digit(10) {
+            result.push(self.current_char.unwrap());
+            self.advance();
         }
 
         return result.parse::<i32>().unwrap();
@@ -143,30 +139,31 @@ impl<'a> Interpreter<'a> {
     }
 
     fn expr(&mut self) -> i32 {
+
         self.current_token = Some(self.get_next_token());
 
-        let left = &self.current_token.as_ref().unwrap().value.unwrap();
+        let left = self.current_token.as_ref().unwrap().value.unwrap();
         let _ = self.eat(CalcTokenType::INTEGER);
 
-        let op_genre = &self.current_token.as_ref().unwrap().genre;
+        let op_genre = self.current_token.as_ref().unwrap().genre;
         match op_genre {
             CalcTokenType::PLUS => {
-                self.eat(CalcTokenType::PLUS);
+                let _= self.eat(CalcTokenType::PLUS);
             }
             CalcTokenType::MINUS => {
-                self.eat(CalcTokenType::MINUS);
+                let _= self.eat(CalcTokenType::MINUS);
             }
             _ => {
                 println!("Found unsupported type:{}", op_genre);
             }
         }
 
-        let right = &self.current_token.as_ref().unwrap().value.unwrap();
+        let right = self.current_token.as_ref().unwrap().value.unwrap();
         let _ = self.eat(CalcTokenType::INTEGER);
 
         let mut result = 0;
 
-        match (*left, *right) {
+        match (left, right) {
             (Value::INT(x),Value::INT(y)) => {
                 match op_genre {
                     CalcTokenType::PLUS => {
