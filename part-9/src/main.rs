@@ -69,9 +69,9 @@ impl Display for Token {
     }
 }
 
-const RESERVED_KEYWORDS: HashMap<String, Token> = HashMap::from([
-    (String::from("BEGIN"), Token{genre: CalcTokenType::BEGIN, value: Some(Value::STRING(String::from("BEGIN")))}),
-    (String::from("END"), Token{genre: CalcTokenType::END, value: Some(Value::STRING(String::from("END")))}),
+const RESERVED_KEYWORDS: HashMap<&str, Token> = HashMap::from([
+    ("BEGIN", Token{genre: CalcTokenType::BEGIN, value: Some(Value::STRING(String::from("BEGIN")))}),
+    ("END", Token{genre: CalcTokenType::END, value: Some(Value::STRING(String::from("END")))}),
 ]);
 
 struct Lexer<'a> {
@@ -141,8 +141,8 @@ impl<'a> Lexer<'a> {
             self.advance();
         }
 
-        if RESERVED_KEYWORDS.contains_key(&result) {
-            *RESERVED_KEYWORDS.get(&result).unwrap()
+        if RESERVED_KEYWORDS.contains_key(&result as &str) {
+            *RESERVED_KEYWORDS.get(&result as &str).unwrap()
         } else {
             Token { genre: CalcTokenType::ID, value: Some(Value::STRING(result)) }
         }

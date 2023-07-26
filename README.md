@@ -2,6 +2,9 @@
 
 为了学习Rust和编译器的目的，本仓库重写了 @rspivak Rulsa 大神的 Lbasi 系列文章的示例代码，原始 Python 代码见大神的 repo : https://github.com/rspivak/lsbasi
 
+
+> 目前更新到了第9章，持续更新中，有问题可以提issues讨论。
+
 The "Let's BUild A Simple Interpreter" article list:
 
 + [Let's Build A Simple Interpreter. Part 1.](https://ruslanspivak.com/lsbasi-part1/)
